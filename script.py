@@ -1,12 +1,13 @@
+import os
+import socket 
+import subprocess
+import sys
+from time import time
+
+import pyotp 
 from pypacker import psocket
 from pypacker.layer12 import ethernet
 from pypacker.layer4 import tcp
-from time import time
-import pyotp 
-import socket 
-import subprocess
-import os
-import sys
 
 
 def port_knocking(ports, timeout):
