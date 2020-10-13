@@ -8,6 +8,7 @@ import subprocess
 import os
 import sys
 
+
 def port_knocking(ports, timeout):
   """Monitor connections on pre-configured ports. This function ends if the Port Knocking is completed."""
 
